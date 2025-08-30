@@ -16,7 +16,6 @@
 /*                                                             */
 /***************************************************************/
 
-
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 /*          DO NOT MODIFY THIS FILE!                            */
 /*          You should only change sim.c!                       */
@@ -33,35 +32,35 @@
 /* Main memory.                                                */
 /***************************************************************/
 
-#define MEM_DATA_START  0x10000000
-#define MEM_DATA_SIZE   0x00100000
-#define MEM_TEXT_START  0x00400000
-#define MEM_TEXT_SIZE   0x00100000
+#define MEM_DATA_START 0x10000000
+#define MEM_DATA_SIZE 0x00100000
+#define MEM_TEXT_START 0x00400000
+#define MEM_TEXT_SIZE 0x00100000
 #define MEM_STACK_START 0xfffffffc
-#define MEM_STACK_SIZE  0x00100000
+#define MEM_STACK_SIZE 0x00100000
 
-typedef struct {
-    uint64_t start, size;
-    uint8_t *mem;
+typedef struct
+{
+  uint64_t start, size;
+  uint8_t *mem;
 } mem_region_t;
 
 /* memory will be dynamically allocated at initialization */
 mem_region_t MEM_REGIONS[] = {
-    { MEM_TEXT_START, MEM_TEXT_SIZE, NULL },
-    { MEM_DATA_START, MEM_DATA_SIZE, NULL },
-    { MEM_STACK_START, MEM_STACK_SIZE, NULL },
+    {MEM_TEXT_START, MEM_TEXT_SIZE, NULL},
+    {MEM_DATA_START, MEM_DATA_SIZE, NULL},
+    {MEM_STACK_START, MEM_STACK_SIZE, NULL},
 };
 
-#define MEM_NREGIONS (sizeof(MEM_REGIONS)/sizeof(mem_region_t))
+#define MEM_NREGIONS (sizeof(MEM_REGIONS) / sizeof(mem_region_t))
 
 /***************************************************************/
 /* CPU State info.                                             */
 /***************************************************************/
 
 CPU_State CURRENT_STATE, NEXT_STATE;
-int RUN_BIT;	/* run bit */
+int RUN_BIT; /* run bit */
 int INSTRUCTION_COUNT;
-
 
 /***************************************************************/
 /*                                                             */
@@ -72,21 +71,22 @@ int INSTRUCTION_COUNT;
 /***************************************************************/
 uint32_t mem_read_32(uint64_t address)
 {
-    int i;
-    for (i = 0; i < MEM_NREGIONS; i++) {
-        if (address >= MEM_REGIONS[i].start &&
-                address < (MEM_REGIONS[i].start + MEM_REGIONS[i].size)) {
-            uint32_t offset = address - MEM_REGIONS[i].start;
+  int i;
+  for (i = 0; i < MEM_NREGIONS; i++)
+  {
+    if (address >= MEM_REGIONS[i].start &&
+        address < (MEM_REGIONS[i].start + MEM_REGIONS[i].size))
+    {
+      uint32_t offset = address - MEM_REGIONS[i].start;
 
-            return
-                (MEM_REGIONS[i].mem[offset+3] << 24) |
-                (MEM_REGIONS[i].mem[offset+2] << 16) |
-                (MEM_REGIONS[i].mem[offset+1] <<  8) |
-                (MEM_REGIONS[i].mem[offset+0] <<  0);
-        }
+      return (MEM_REGIONS[i].mem[offset + 3] << 24) |
+             (MEM_REGIONS[i].mem[offset + 2] << 16) |
+             (MEM_REGIONS[i].mem[offset + 1] << 8) |
+             (MEM_REGIONS[i].mem[offset + 0] << 0);
     }
+  }
 
-    return 0;
+  return 0;
 }
 
 /***************************************************************/
@@ -98,19 +98,21 @@ uint32_t mem_read_32(uint64_t address)
 /***************************************************************/
 void mem_write_32(uint64_t address, uint32_t value)
 {
-    int i;
-    for (i = 0; i < MEM_NREGIONS; i++) {
-        if (address >= MEM_REGIONS[i].start &&
-                address < (MEM_REGIONS[i].start + MEM_REGIONS[i].size)) {
-            uint32_t offset = address - MEM_REGIONS[i].start;
+  int i;
+  for (i = 0; i < MEM_NREGIONS; i++)
+  {
+    if (address >= MEM_REGIONS[i].start &&
+        address < (MEM_REGIONS[i].start + MEM_REGIONS[i].size))
+    {
+      uint32_t offset = address - MEM_REGIONS[i].start;
 
-            MEM_REGIONS[i].mem[offset+3] = (value >> 24) & 0xFF;
-            MEM_REGIONS[i].mem[offset+2] = (value >> 16) & 0xFF;
-            MEM_REGIONS[i].mem[offset+1] = (value >>  8) & 0xFF;
-            MEM_REGIONS[i].mem[offset+0] = (value >>  0) & 0xFF;
-            return;
-        }
+      MEM_REGIONS[i].mem[offset + 3] = (value >> 24) & 0xFF;
+      MEM_REGIONS[i].mem[offset + 2] = (value >> 16) & 0xFF;
+      MEM_REGIONS[i].mem[offset + 1] = (value >> 8) & 0xFF;
+      MEM_REGIONS[i].mem[offset + 0] = (value >> 0) & 0xFF;
+      return;
     }
+  }
 }
 /***************************************************************/
 /*                                                             */
@@ -119,7 +121,8 @@ void mem_write_32(uint64_t address, uint32_t value)
 /* Purpose   : Print out a list of commands                    */
 /*                                                             */
 /***************************************************************/
-void help() {                                                    
+void help()
+{
   printf("----------------ARM ISIM Help-----------------------\n");
   printf("go               -  run program to completion         \n");
   printf("run n            -  execute program for n instructions\n");
@@ -137,7 +140,8 @@ void help() {
 /* Purpose   : Execute a cycle                                 */
 /*                                                             */
 /***************************************************************/
-void cycle() {                                                
+void cycle()
+{
 
   process_instruction();
   CURRENT_STATE = NEXT_STATE;
@@ -151,25 +155,29 @@ void cycle() {
 /* Purpose   : Simulate ARM for n cycles                       */
 /*                                                             */
 /***************************************************************/
-void run(int num_cycles) {                                      
+void run(int num_cycles)
+{
   int i;
 
-  if (RUN_BIT == FALSE) {
+  if (RUN_BIT == FALSE)
+  {
     printf("Can't simulate, Simulator is halted\n\n");
     return;
   }
 
   printf("Simulating for %d cycles...\n\n", num_cycles);
-  for (i = 0; i < num_cycles; i++) {
-    if (RUN_BIT == FALSE) {
-	    printf("Simulator halted\n\n");
-	    break;
+  for (i = 0; i < num_cycles; i++)
+  {
+    if (RUN_BIT == FALSE)
+    {
+      printf("Simulator halted\n\n");
+      break;
     }
     cycle();
   }
 }
 
-/***************************************************************/ 
+/***************************************************************/
 /*                                                             */
 /* Procedure : mdump                                           */
 /*                                                             */
@@ -177,7 +185,8 @@ void run(int num_cycles) {
 /*             output file.                                    */
 /*                                                             */
 /***************************************************************/
-void mdump(FILE * dumpsim_file, int start, int stop) {          
+void mdump(FILE *dumpsim_file, int start, int stop)
+{
   int address;
 
   printf("\nMemory content [0x%08x..0x%08x] :\n", start, stop);
@@ -198,12 +207,13 @@ void mdump(FILE * dumpsim_file, int start, int stop) {
 /*                                                             */
 /* Procedure : rdump                                           */
 /*                                                             */
-/* Purpose   : Dump current register and bus values to the     */   
+/* Purpose   : Dump current register and bus values to the     */
 /*             output file.                                    */
 /*                                                             */
 /***************************************************************/
-void rdump(FILE * dumpsim_file) {                               
-  int k; 
+void rdump(FILE *dumpsim_file)
+{
+  int k;
 
   printf("\nCurrent register/bus values :\n");
   printf("-------------------------------------\n");
@@ -235,31 +245,34 @@ void rdump(FILE * dumpsim_file) {
 /* Purpose   : Simulate ARM until HALTed                       */
 /*                                                             */
 /***************************************************************/
-void go(FILE * dumpsim_file) {                                                     
-  if (RUN_BIT == FALSE) {
+void go(FILE *dumpsim_file)
+{
+  if (RUN_BIT == FALSE)
+  {
     printf("Can't simulate, Simulator is halted\n\n");
     return;
   }
 
   printf("Simulating...\n\n");
-  while (RUN_BIT) {
+  while (RUN_BIT)
+  {
     cycle();
-    //printf("Going\n");
-    //rdump(dumpsim_file);
-    //mdump(dumpsim_file, MEM_DATA_START, MEM_DATA_START+0x100);
+    // printf("Going\n");
+    // rdump(dumpsim_file);
+    // mdump(dumpsim_file, MEM_DATA_START, MEM_DATA_START+0x100);
   }
   printf("Simulator halted\n\n");
 }
-
 
 /***************************************************************/
 /*                                                             */
 /* Procedure : get_command                                     */
 /*                                                             */
-/* Purpose   : Read a command from standard input.             */  
+/* Purpose   : Read a command from standard input.             */
 /*                                                             */
 /***************************************************************/
-void get_command(FILE * dumpsim_file) {                         
+void get_command(FILE *dumpsim_file)
+{
   char buffer[20];
   int start, stop, cycles;
   int register_no;
@@ -268,11 +281,12 @@ void get_command(FILE * dumpsim_file) {
   printf("ARM-SIM> ");
 
   if (scanf("%s", buffer) == EOF)
-      exit(0);
+    exit(0);
 
   printf("\n");
 
-  switch(buffer[0]) {
+  switch (buffer[0])
+  {
   case 'G':
   case 'g':
     go(dumpsim_file);
@@ -281,7 +295,7 @@ void get_command(FILE * dumpsim_file) {
   case 'M':
   case 'm':
     if (scanf("%i %i", &start, &stop) != 2)
-        break;
+      break;
 
     mdump(dumpsim_file, start, stop);
     break;
@@ -298,20 +312,22 @@ void get_command(FILE * dumpsim_file) {
   case 'R':
   case 'r':
     if (buffer[1] == 'd' || buffer[1] == 'D')
-	    rdump(dumpsim_file);
-    else {
-	    if (scanf("%d", &cycles) != 1) break;
-	    run(cycles);
+      rdump(dumpsim_file);
+    else
+    {
+      if (scanf("%d", &cycles) != 1)
+        break;
+      run(cycles);
     }
     break;
 
   case 'I':
   case 'i':
-   if (scanf("%i %" PRIx64, &register_no, &register_value) != 2)
+    if (scanf("%i %" PRIx64, &register_no, &register_value) != 2)
       break;
-   CURRENT_STATE.REGS[register_no] = register_value;
-   NEXT_STATE.REGS[register_no] = register_value;
-   break;
+    CURRENT_STATE.REGS[register_no] = register_value;
+    NEXT_STATE.REGS[register_no] = register_value;
+    break;
 
   default:
     printf("Invalid Command\n");
@@ -326,13 +342,15 @@ void get_command(FILE * dumpsim_file) {
 /* Purpose   : Allocate and zero memory                        */
 /*                                                             */
 /***************************************************************/
-void init_memory() {                                           
-    int i;
-    for (i = 0; i < MEM_NREGIONS; i++) {
-        // Extra 3 bytes to prevent buffer overflow on unaligned access.
-        MEM_REGIONS[i].mem = malloc(MEM_REGIONS[i].size + 3);
-        memset(MEM_REGIONS[i].mem, 0, MEM_REGIONS[i].size);
-    }
+void init_memory()
+{
+  int i;
+  for (i = 0; i < MEM_NREGIONS; i++)
+  {
+    // Extra 3 bytes to prevent buffer overflow on unaligned access.
+    MEM_REGIONS[i].mem = malloc(MEM_REGIONS[i].size + 3);
+    memset(MEM_REGIONS[i].mem, 0, MEM_REGIONS[i].size);
+  }
 }
 
 /**************************************************************/
@@ -342,13 +360,15 @@ void init_memory() {
 /* Purpose   : Load program and service routines into mem.    */
 /*                                                            */
 /**************************************************************/
-void load_program(char *program_filename) {                   
-  FILE * prog;
+void load_program(char *program_filename)
+{
+  FILE *prog;
   int ii, word;
 
   /* Open program file. */
   prog = fopen(program_filename, "r");
-  if (prog == NULL) {
+  if (prog == NULL)
+  {
     printf("Error: Can't open program file %s\n", program_filename);
     exit(-1);
   }
@@ -357,38 +377,43 @@ void load_program(char *program_filename) {
 
   ii = 0;
   int bytes_read = EOF;
-  while ((bytes_read=fscanf(prog, "%x\n", &word)) > 0) {
+  while ((bytes_read = fscanf(prog, "%x\n", &word)) > 0)
+  {
     mem_write_32(MEM_TEXT_START + ii, word);
     ii += 4;
   }
-  if (bytes_read == 0) {
+  if (bytes_read == 0)
+  {
     printf("Error: Malformed program file %s\n", program_filename);
     exit(-1);
   }
 
   CURRENT_STATE.PC = MEM_TEXT_START;
 
-  printf("Read %d words from program into memory.\n\n", ii/4);
+  printf("Read %d words from program into memory.\n\n", ii / 4);
 }
 
 /************************************************************/
 /*                                                          */
 /* Procedure : initialize                                   */
 /*                                                          */
-/* Purpose   : Load machine language program                */ 
+/* Purpose   : Load machine language program                */
 /*             and set up initial state of the machine.     */
 /*                                                          */
 /************************************************************/
-void initialize(char *program_filename, int num_prog_files) { 
+void initialize(char *program_filename, int num_prog_files)
+{
   int i;
 
   init_memory();
-  for ( i = 0; i < num_prog_files; i++ ) {
+  for (i = 0; i < num_prog_files; i++)
+  {
     load_program(program_filename);
-    while(*program_filename++ != '\0');
+    while (*program_filename++ != '\0')
+      ;
   }
   NEXT_STATE = CURRENT_STATE;
-    
+
   RUN_BIT = TRUE;
 }
 
@@ -397,11 +422,13 @@ void initialize(char *program_filename, int num_prog_files) {
 /* Procedure : main                                            */
 /*                                                             */
 /***************************************************************/
-int main(int argc, char *argv[]) {                              
-  FILE * dumpsim_file;
+int main(int argc, char *argv[])
+{
+  FILE *dumpsim_file;
 
   /* Error Checking */
-  if (argc < 2) {
+  if (argc < 2)
+  {
     printf("Error: usage: %s <program_file_1> <program_file_2> ...\n",
            argv[0]);
     exit(1);
@@ -411,7 +438,8 @@ int main(int argc, char *argv[]) {
 
   initialize(argv[1], argc - 1);
 
-  if ( (dumpsim_file = fopen( "dumpsim", "w" )) == NULL ) {
+  if ((dumpsim_file = fopen("dumpsim", "w")) == NULL)
+  {
     printf("Error: Can't open dumpsim file\n");
     exit(-1);
   }
