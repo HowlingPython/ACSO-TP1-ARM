@@ -14,8 +14,8 @@ Instruction decode(uint32_t instruction_hex) {
     instruction.rd = instruction_hex & 0x1F; // Bits [4:0] Registro destino
     instruction.rn = (instruction_hex >> 5) & 0x1F; // Bits [9:5] Registro fuente 1
     instruction.rm = (instruction_hex >> 16) & 0x1F; // Bits [20:16] Registro fuente 2, solo con Extended y Register
-    instruction.shift_amt = get_shiftamt(instruction.opc, instruction_hex); 
-    instruction.imm = get_imm(instruction.opc, instruction_hex);
+    instruction.imm = get_imm(instruction.opc, instruction_hex); // Inmediato (si aplica)
+    instruction.shift_amt = get_shiftamt(instruction.opc, instruction); // Shift amount (si aplica)
 
 
     return instruction;
@@ -102,4 +102,91 @@ Opcode get_opcode(uint32_t instruction) {
     }
     // --- Si no matchea ningun patron conocido, reportar UNKNOWN
     return UNKNOWN;
+}
+
+int get_shiftamt(Opcode opc, Instruction instruction) {
+    switch (opc) {
+        case ADDS_extended:
+        case SUBS_extended:
+        case CMP_extended:
+            return instruction.imm; // shift [12:10], 3 bits  
+        case ADDS_immediate:
+        case SUBS_immediate: // casos en execute
+            return (instruction.hex >> 22) & 0x3; // shift [23:22], 2 bits
+        case LSL_immediate:
+        case LSR_immediate:
+            return (instruction.hex >> 16) & 0x3F; // immr [21:16], 6 bits
+        default:
+            return 0; // Otros casos no usan shift
+    }
+}
+
+// Chequear 
+int get_imm(Opcode opc, uint32_t instruction) {
+    switch (opc) {
+        case ADDS_immediate:
+        case SUBS_immediate:
+        case ADD_immediate:
+        case CMP_immediate:
+            return (instruction >> 10) & 0xFFF; // imm12 [21:10]
+        case B:
+            {   // imm26 [25:0], sign-extend y <<2
+                int32_t imm26 = instruction & 0x3FFFFFF;
+                if (imm26 & 0x2000000) imm26 |= 0xFC000000; // sign-extend
+                return imm26 << 2;
+            }
+        case CBZ:
+        case CBNZ:
+            {   // imm19 [23:5], sign-extend y <<2
+                int32_t imm19 = (instruction >> 5) & 0x7FFFF;
+                if (imm19 & 0x40000) imm19 |= 0xFFF80000; // sign-extend 
+                return imm19 << 2;
+            }
+        case STUR:
+        case STURB:
+        case STURH:
+        case LDUR:
+        case LDURB:
+        case LDURH:
+            {   // imm9 [20:12], sign-extend
+                int32_t imm9 = (instruction >> 12) & 0x1FF;
+                if (imm9 & 0x100) imm9 |= 0xFFFFFE00; // sign-extend
+                return imm9;
+            }
+        case MOVZ:
+            {   // imm16 [20:5]
+                return (instruction >> 5) & 0xFFFF;
+            }
+        case BEQ:
+        case BNE:
+        case BGT:
+        case BLT:
+        case BGE:
+        case BLE:
+            {   // imm19 [23:5], sign-extend y <<2
+                int32_t imm19 = (instruction >> 5) & 0x7FFFF;
+                if (imm19 & 0x40000) imm19 |= 0xFFF80000; // sign-extend 
+                return imm19 << 2;
+            }
+        case ADD_extended:
+        case ADDS_extended:
+        case CMP_extended:
+            {
+                return (instruction >> 10) & 0x7; // shift [12:10], 3 bits  
+            }
+        case SUBS_extended:
+        case ANDS:
+        case EOR:
+        case ORR:
+            {
+                return (instruction >> 10) & 0x3F; // shift [15:10], 6 bits
+            }
+        case LSL_immediate:
+        case LSR_immediate:
+            {
+                return (instruction >> 16) & 0x3F; // immr [21:16], 6 bits
+            }
+        default:
+            return 0; // Otros casos no usan inmediato
+    }
 }
