@@ -2,9 +2,7 @@
 #include <inttypes.h>
 #include "Opcodes.h"
 
-
-typedef struct
-{
+typedef struct {
     Opcode opc;
     uint32_t hex;
     int rd;
