@@ -5,9 +5,9 @@
 typedef struct {
     Opcode opc;
     uint32_t hex;
-    int rd;
-    int rn;
-    int rm;
+    uint8_t rd;
+    uint8_t rn;
+    uint8_t rm;
     int imm;
     int shift_amt;
 } Instruction;

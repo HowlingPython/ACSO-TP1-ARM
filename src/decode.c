@@ -1,34 +1,44 @@
 #include "decode.h"
 
 Instruction decode(uint32_t instruction_hex) {
-    Instruction instruction;
+    Instruction instruction = (Instruction){0}; // Inicializar a cero evita basura en campos no seteados
     instruction.hex = instruction_hex;    
     
-    if (instruction_hex >> 21  == 0x6A2u){
+    // --- HLT: el TP indica [31:21] == 0x6A2.
+    if (instruction_hex >> 21  == 0x6A2){
         instruction.opc = HLT;
         return instruction;
     }    
 
-    instruction.opc = get_opcode(instruction_hex); // Opcodes guradados en un enum
+    instruction.opc = get_opcode(instruction_hex); // En "Opcodes.h" esta la enum con los opcodes
+    instruction.rd = instruction_hex & 0x1F; // Bits [4:0] Registro destino
+    instruction.rn = (instruction_hex >> 5) & 0x1F; // Bits [9:5] Registro fuente 1
+    instruction.rm = (instruction_hex >> 16) & 0x1F; // Bits [20:16] Registro fuente 2, solo en EXT y REG
+    instruction.shift_amt = get_shiftamt(instruction.opc, instruction_hex); 
+    instruction.imm = get_imm(instruction.opc, instruction_hex);
 
 
     return instruction;
 }
 
 Opcode get_opcode(uint32_t instruction) {
-    uint8_t cond = instruction & 0xF;
-    uint8_t op24 = (instruction >> 24) & 0xFF;
-    uint16_t op21 = (instruction >> 21) & 0x7FF;
+    // Slices útiles para clasificar
+    uint8_t  cond =  instruction        & 0xF;    // [3:0]  condición de B.cond
+    uint8_t  op24 = (instruction >> 24) & 0xFF;   // [31:24] familias: ADDI/SUBSI/ADDSI/B.cond/CBZ/CBNZ
+    uint16_t op21 = (instruction >> 21) & 0x7FF;  // [31:21] familias: R-format, LSU unscaled, lógicas
 
-    // --- B (unconditional): [31:26] == 0b000101 (0x5)
+    // --- B (branch incondicional): [31:26] == 0b000101 (0x5)
     if (((instruction >> 26) & 0x3F) == 0x5) return B;
     
-    // --- BR (branch register): patrón exacto con Rn libre en [9:5]
-    if (((instruction >> 10) & 0x3FFFFF) == 0x3587C0 && (instruction & 0x1F) == 0) {
-        return BR;
-    }
+    // --- BR (branch register, salto indirecto):
+    // Patrón fijo con Rn libre en bits [9:5]
+    if (((instruction >> 10) & 0x3FFFFF) == 0x3587C0 && (instruction & 0x1F) == 0) return BR;
 
-    // --- LSL/LSR (alias UBFM 64b): [31:22] == 0x34D, distinguir por (immr, imms)
+    // --- LSL/LSR (alias de UBFM 64-bit): [31:22] == 0x34D  (sf=1 y N=1 implícitos).
+    // Distinción por campos:
+    //   LSR: imms == 63
+    //   LSL: imms + 1 == immr      (forma preferida del alias)
+    // Nota: si no matchea, es un UBFM genérico (fuera del alcance del TP).
     if (((instruction >> 22) & 0x3FF) == 0x34D) {
         uint8_t immr = (instruction >> 16) & 0x3F;
         uint8_t imms = (instruction >> 10) & 0x3F;
@@ -37,18 +47,21 @@ Opcode get_opcode(uint32_t instruction) {
         if ((uint8_t)(imms + 1) == immr) return LSL_immediate;
     }
 
-    // --- MOVZ 64b: [31:23] == 0x1A5 y hw==0
+    // --- MOVZ (move wide w/ zero, 64-bit sólo con hw==0):
+    // [31:23] == 110100101 (0x1A5) y [22:21] (hw) == 0 ⇒ shift de 0 bits.
     if (((instruction >> 23) & 0x1FF) == 0x1A5) {
         if (((instruction >> 21) & 0x3) == 0) return MOVZ;
     }
 
     // --- Inmediatas / condicionales por [31:24]
     switch (op24) {
+        // ADD (immediate, 64-bit)
         case 0x91: return ADD_immediate;
-        
+        // ADDS (immediate, 64-bit). 
         case 0xB1: return ADDS_immediate;
+        // SUBS (immediate) o CMP (immediate). CMP es SUBS con Rd==XZR (Rd==31).
         case 0xF1: return ((instruction & 0x1F) == 0x1F) ? CMP_immediate : SUBS_immediate;
-        
+        // B.cond (branch condicional). La condición está en [3:0] (cond).
         case 0x54: { // B.cond
             switch (cond) {
                 case 0x0: return BEQ;
@@ -60,33 +73,33 @@ Opcode get_opcode(uint32_t instruction) {
                 default: return UNKNOWN;
             }
         }
-        
+        // CBZ/CBNZ (64-bit).
         case 0xB4: return CBZ;
         case 0xB5: return CBNZ;
     }
 
     // --- Registro / Lógicas / Memoria por [31:21]
     switch (op21) {
+        // ADD/ADDS (extended register).
         case 0x459: return ADD_extended;
-        
-        case 0x559: return ADDS_extended;
-        case 0x759: return ((instruction & 0x1F) == 0x1F) ? CMP_extended : SUBS_extended;
-        
+        case 0x558: return ADDS_extended; // 0x558 porque el bit 21 es 0 para este TP, sino seria 0x559. 
+        // SUBS/CMP (extended register). CMP si Rd==XZR (Rd==31).
+        case 0x758: return ((instruction & 0x1F) == 0x1F) ? CMP_extended : SUBS_extended; //igual en en ADDS
+        // ANDS/EOR/ORR (shifted register). El TP indica ignorar el shift.
         case 0x750: return ANDS;
         case 0x650: return EOR;
         case 0x550: return ORR;
-        
-        case 0x1B7: return MUL;
-
-        case 0x7C0: return STUR;
-        case 0x1C0: return STURB;
-        case 0x3C0: return STURH;
-
-        case 0x7C2: return LDUR;
-        case 0x1C2: return LDURB;
-        case 0x3C2: return LDURH;
+        // MUL
+        case 0x4D8: return MUL;
+        // Load/Store Unit
+        case 0x7C0: return STUR;  // store 64
+        case 0x1C0: return STURB; // store byte
+        case 0x3C0: return STURH; // store halfword 
+        case 0x7C2: return LDUR;  // load  64
+        case 0x1C2: return LDURB; // load  byte (zero-extend a 64)
+        case 0x3C2: return LDURH; // load  halfword (zero-extend a 64)
 
     }
-
+    // --- Si no matchea ningún patrón conocido, reportar UNKNOWN
     return UNKNOWN;
 }
