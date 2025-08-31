@@ -221,8 +221,13 @@ void execute(const Instruction* in) {
         case MUL:            exec_mul(in);            break;
         case CBZ:            exec_cbz(in);            break;
         case CBNZ:           exec_cbnz(in);           break;
-
-        /* TODO: el resto de instrucciones del TP */
+        case STUR:          /* TODO: el resto de instrucciones del TP */ break;
+        case STURB:         /* TODO: el resto de instrucciones del TP */ break;
+        case STURH:         /* TODO: el resto de instrucciones del TP */ break;
+        case LDUR:          /* TODO: el resto de instrucciones del TP */ break;
+        case LDURB:         /* TODO: el resto de instrucciones del TP */ break;
+        case LDURH:         /* TODO: el resto de instrucciones del TP */ break;
+        
         default: break;
     }
 }
