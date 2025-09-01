@@ -1,7 +1,4 @@
-#include <stdint.h>
 #include "execute.h"
-#include "utils.h"
-#include <stdbool.h>
 
 static void exec_adds_immediate(const Instruction* in) {
     uint64_t a   = read_x(in->rn);
@@ -24,7 +21,7 @@ static void exec_adds_extended(const Instruction* in) {
     set_nz(r);
 }
 
-static void exec_subs_immediate(const Instruction* in, bool save_result) {
+static void exec_subs_immediate(const Instruction* in, int save_result) {
     uint64_t a   = read_x(in->rn);
     uint64_t imm = (uint64_t)(in->imm & 0xFFF);   // imm12
 
@@ -36,7 +33,7 @@ static void exec_subs_immediate(const Instruction* in, bool save_result) {
     set_nz(r);
 }
 
-static void exec_subs_extended(const Instruction* in, bool save_result) {
+static void exec_subs_extended(const Instruction* in, int save_result) {
     uint64_t a = read_x(in->rn);
     uint64_t b = read_x(in->rm);   // ignorar extend/amount (asumir 0)
     uint64_t r = a - b;

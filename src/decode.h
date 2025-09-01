@@ -13,4 +13,3 @@ typedef struct {
 } Instruction;
 
 Instruction decode(uint32_t instruction_hex);
-Opcode get_opcode(uint32_t instruction_hex);

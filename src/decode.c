@@ -21,7 +21,7 @@ Instruction decode(uint32_t instruction_hex) {
     return instruction;
 }
 
-Opcode get_opcode(uint32_t instruction) {
+static Opcode get_opcode(uint32_t instruction) {
     // Slices utiles para clasificar
     uint8_t  cond =  instruction        & 0xF;    // [3:0]  condicion de B.cond
     uint8_t  op24 = (instruction >> 24) & 0xFF;   // [31:24] familias: ADDI/SUBSI/ADDSI/B.cond/CBZ/CBNZ
@@ -104,7 +104,7 @@ Opcode get_opcode(uint32_t instruction) {
     return UNKNOWN;
 }
 
-int get_shiftamt(Opcode opc, Instruction instruction) {
+static int get_shiftamt(Opcode opc, Instruction instruction) {
     switch (opc) {
         case ADDS_extended:
         case SUBS_extended:
@@ -122,7 +122,7 @@ int get_shiftamt(Opcode opc, Instruction instruction) {
 }
 
 // Chequear 
-int get_imm(Opcode opc, uint32_t instruction) {
+static int get_imm(Opcode opc, uint32_t instruction) {
     switch (opc) {
         case ADDS_immediate:
         case SUBS_immediate:
