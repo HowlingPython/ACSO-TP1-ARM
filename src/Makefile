@@ -1,20 +1,19 @@
 CC := gcc
 CFLAGS := -std=c11 -g -O0 -Wall -Wextra -Wno-unused-parameter
-DEPFLAGS := -MMD -MP
 
 SRCS := shell.c sim.c decode.c execute.c utils.c
-OBJS := $(SRCS:.c=.o)
-DEPS := $(OBJS:.o=.d)
+OBJDIR := obj
+OBJS := $(addprefix $(OBJDIR)/,$(SRCS:.c=.o))
 
 all: sim
 
 sim: $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
-%.o: %.c
-	$(CC) $(CFLAGS) $(DEPFLAGS) -c $< -o $@
+$(OBJDIR)/%.o: %.c
+	mkdir -p $(OBJDIR)
+	$(CC) $(CFLAGS) -c $< -o $@
 
--include $(DEPS)
-
+.PHONY: clean
 clean:
-	rm -f $(OBJS) $(DEPS) sim *~ dumpsim
+	rm -rf $(OBJDIR) sim *~ dumpsim
