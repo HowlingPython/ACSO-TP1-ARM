@@ -1,21 +1,26 @@
 #include "utils.h"
 
-uint64_t mem_read64(uint64_t addr) {
-    uint32_t lo = mem_read_32(addr);
-    uint32_t hi = mem_read_32(addr + 4);
-    return ((uint64_t)hi << 32) | lo;
+uint8_t mem_read8(uint64_t addr) {
+    uint64_t aligned = addr & ~3ULL;
+    uint32_t w = mem_read_32(aligned);
+    int shift = (int)((addr & 3ULL) * 8);
+    return (uint8_t)((w >> shift) & 0xFFu);
 }
-void mem_write64(uint64_t addr, uint64_t val) {
-    uint32_t lo = (uint32_t)(val & 0xFFFFFFFFu);
-    uint32_t hi = (uint32_t)(val >> 32);
-    mem_write_32(addr, lo);
-    mem_write_32(addr + 4, hi);
+
+void mem_write8(uint64_t addr, uint8_t val) {
+    uint64_t aligned = addr & ~3ULL;
+    uint32_t w = mem_read_32(aligned);
+    int shift = (int)((addr & 3ULL) * 8);
+    uint32_t mask = ~(0xFFu << shift);
+    uint32_t nw = (w & mask) | (((uint32_t)val) << shift);
+    mem_write_32(aligned, nw);
 }
 
 uint16_t mem_read16(uint64_t addr) {
     uint64_t aligned = addr & ~3ULL;
     uint32_t w = mem_read_32(aligned);
     int shift = (int)((addr & 3ULL) * 8);
+    
     return (uint16_t)((w >> shift) & 0xFFFF);
 }
 
@@ -26,6 +31,20 @@ void mem_write16(uint64_t addr, uint16_t val) {
     uint32_t mask = ~(0xFFFFu << shift);
     uint32_t nw = (w & mask) | (((uint32_t)val) << shift);
     mem_write_32(aligned, nw);
+}
+
+uint64_t mem_read64(uint64_t addr) {
+    uint64_t v = 0;
+    for (int i = 0; i < 8; ++i) {
+        v |= ((uint64_t)mem_read8(addr + (uint64_t)i)) << (8 * i);
+    }
+    return v;
+}
+
+void mem_write64(uint64_t addr, uint64_t val) {
+    for (int i = 0; i < 8; ++i) {
+        mem_write8(addr + (uint64_t)i, (uint8_t)((val >> (8 * i)) & 0xFFu));
+    }
 }
 
 uint64_t read_x(unsigned idx) {

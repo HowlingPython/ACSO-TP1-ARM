@@ -43,7 +43,8 @@ static void exec_subs_extended(const Instruction* in, int save_result) {
 }
 
 static void exec_hlt(const Instruction* in) {
-    RUN_BIT = FALSE; // No hace nada, la simulacion se detiene
+    (void)in;
+    RUN_BIT = FALSE;
 }
 
 static void exec_cmp_immediate(const Instruction* in) {
@@ -89,56 +90,44 @@ static void exec_br (const Instruction* in) {
 }
 static void exec_beq(const Instruction* in) {
     // Salta si Z == 1
-    if (CURRENT_STATE.FLAG_Z) {
-        NEXT_STATE.PC = CURRENT_STATE.PC + in->imm;   // in->imm ya <<2 y con signo
-    }
+    if (CURRENT_STATE.FLAG_Z) NEXT_STATE.PC = CURRENT_STATE.PC + in->imm;   // in->imm ya <<2 y con signo    
 }
 
 static void exec_bne(const Instruction* in) {
     // Salta si Z == 0
-    if (!CURRENT_STATE.FLAG_Z) {
-        NEXT_STATE.PC = CURRENT_STATE.PC + in->imm;   // in->imm ya <<2 y con signo
-    }
+    if (!CURRENT_STATE.FLAG_Z) NEXT_STATE.PC = CURRENT_STATE.PC + in->imm;   // in->imm ya <<2 y con signo
 }
 
 static void exec_bgt(const Instruction* in) {
     // Salta si Z == 0 y N == V (N y V son 0 en este TP)
-    if (!CURRENT_STATE.FLAG_Z && (CURRENT_STATE.FLAG_N == 0)) {
-        NEXT_STATE.PC = CURRENT_STATE.PC + in->imm;   // in->imm ya <<2 y con signo
-    }
+    if (!CURRENT_STATE.FLAG_Z && (CURRENT_STATE.FLAG_N == 0)) NEXT_STATE.PC = CURRENT_STATE.PC + in->imm;   // in->imm ya <<2 y con signo
 }
 
 static void exec_blt(const Instruction* in) {
     // Salta si N != V (N y V son 0 en este TP)
-    if (CURRENT_STATE.FLAG_N != 0) {
-        NEXT_STATE.PC = CURRENT_STATE.PC + in->imm;   // in->imm ya <<2 y con signo
-    }
+    if (CURRENT_STATE.FLAG_N != 0) NEXT_STATE.PC = CURRENT_STATE.PC + in->imm;   // in->imm ya <<2 y con signo
 }
 
 static void exec_bge(const Instruction* in) {
     // Salta si N == V (N y V son 0 en este TP)
-    if (CURRENT_STATE.FLAG_N == 0) {
-        NEXT_STATE.PC = CURRENT_STATE.PC + in->imm;   // in->imm ya <<2 y con signo
-    }
+    if (CURRENT_STATE.FLAG_N == 0) NEXT_STATE.PC = CURRENT_STATE.PC + in->imm;   // in->imm ya <<2 y con signo
 }
 
 static void exec_ble(const Instruction* in) {
     // Salta si Z == 1 o N != V (N y V son 0 en este TP)
-    if (CURRENT_STATE.FLAG_Z || (CURRENT_STATE.FLAG_N != 0)) {
-        NEXT_STATE.PC = CURRENT_STATE.PC + in->imm;   // in->imm ya <<2 y con signo
-    }
+    if (CURRENT_STATE.FLAG_Z || (CURRENT_STATE.FLAG_N != 0)) NEXT_STATE.PC = CURRENT_STATE.PC + in->imm;   // in->imm ya <<2 y con signo
 }
 
 static void exec_lsl_immediate(const Instruction* in) {
     uint64_t a = read_x(in->rn);
-    uint64_t r = a << in->shift_amt;  // shift_amt ya tiene el valor correcto (0..63)
+    uint64_t r = a << in->shift_amt;  // shift_amt computado en el decode
 
     write_x(in->rd, r);
 }
 
 static void exec_lsr_immediate(const Instruction* in) {
     uint64_t a = read_x(in->rn);
-    uint64_t r = a >> in->shift_amt;  // shift_amt ya tiene el valor correcto (0..63)
+    uint64_t r = a >> in->shift_amt;  // shift_amt computado en el decode
 
     write_x(in->rd, r);
 }
@@ -190,9 +179,46 @@ static void exec_cbnz(const Instruction* in) {
     }
 }
 
+static void exec_stur(const Instruction* in) {
+    uint64_t addr = read_x(in->rn) + (int64_t)in->imm; // imm9 sign-extended
+    uint64_t v = read_x(in->rd);
+    mem_write64(addr, v);
+}
+
+static void exec_sturb(const Instruction* in) {
+    uint64_t addr = read_x(in->rn) + (int64_t)in->imm;
+    uint8_t v = (uint8_t)read_x(in->rd);
+    mem_write8(addr, v);
+}
+
+static void exec_sturh(const Instruction* in) {
+    uint64_t addr = read_x(in->rn) + (int64_t)in->imm;
+    uint16_t v = (uint16_t)read_x(in->rd);
+    mem_write16(addr, v);
+}
+
+static void exec_ldur(const Instruction* in) {
+    uint64_t addr = read_x(in->rn) + (int64_t)in->imm;
+    uint64_t v = mem_read64(addr);
+    write_x(in->rd, v);
+}
+
+static void exec_ldurb(const Instruction* in) {
+    uint64_t addr = read_x(in->rn) + (int64_t)in->imm;
+    uint64_t v = (uint64_t)mem_read8(addr); // convertir de un entero unsigned mas chico a 
+    write_x(in->rd, v);                     // uno unsigned mas grande siempre hace zero-extend
+}
+
+static void exec_ldurh(const Instruction* in) {
+    uint64_t addr = read_x(in->rn) + (int64_t)in->imm;
+    uint64_t v = (uint64_t)mem_read16(addr); // zero-extend
+    write_x(in->rd, v);
+}
+
 void execute(const Instruction* in) {
     switch (in->opc) {
         case HLT:            exec_hlt(in);            break;
+        case UNKNOWN:                                 break;
         case ADDS_immediate: exec_adds_immediate(in); break;
         case ADDS_extended:  exec_adds_extended(in);  break;
         case SUBS_immediate: exec_subs_immediate(in, TRUE); break;
@@ -218,13 +244,11 @@ void execute(const Instruction* in) {
         case MUL:            exec_mul(in);            break;
         case CBZ:            exec_cbz(in);            break;
         case CBNZ:           exec_cbnz(in);           break;
-        case STUR:          /* TODO: el resto de instrucciones del TP */ break;
-        case STURB:         /* TODO: el resto de instrucciones del TP */ break;
-        case STURH:         /* TODO: el resto de instrucciones del TP */ break;
-        case LDUR:          /* TODO: el resto de instrucciones del TP */ break;
-        case LDURB:         /* TODO: el resto de instrucciones del TP */ break;
-        case LDURH:         /* TODO: el resto de instrucciones del TP */ break;
-        
-        default: break;
+        case STUR:           exec_stur(in);           break;
+        case STURB:          exec_sturb(in);          break;
+        case STURH:          exec_sturh(in);          break;
+        case LDUR:           exec_ldur(in);           break;
+        case LDURB:          exec_ldurb(in);          break;
+        case LDURH:          exec_ldurh(in);          break;
     }
 }

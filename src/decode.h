@@ -1,3 +1,6 @@
+#ifndef DECODE_H
+#define DECODE_H
+
 #include <stdio.h>
 #include <inttypes.h>
 #include "Opcodes.h"
@@ -13,3 +16,5 @@ typedef struct {
 } Instruction;
 
 Instruction decode(uint32_t instruction_hex);
+
+#endif
