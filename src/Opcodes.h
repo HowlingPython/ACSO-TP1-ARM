@@ -1,8 +1,8 @@
 #ifndef OPCODES_H
 #define OPCODES_H
 
-typedef enum
-{
+typedef enum {
+    ADCS,
     ADDS_extended,
     ADDS_immediate,
     SUBS_extended,

@@ -65,6 +65,10 @@ void set_nz(uint64_t res) {
        NEXT_STATE.FLAG_C = 0; NEXT_STATE.FLAG_V = 0; */
 }
 
+void set_c(uint64_t a, uint64_t res) {
+    NEXT_STATE.FLAG_C = res < a;
+}
+
 int* read_nz(void) {
     static int flags[2]; // 0 = N, 1 = Z
     flags[0] = CURRENT_STATE.FLAG_N;

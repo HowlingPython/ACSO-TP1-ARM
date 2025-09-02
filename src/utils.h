@@ -20,6 +20,7 @@ void write_x(unsigned idx, uint64_t val);
 
 /* Setea N y Z */
 void set_nz(uint64_t res);
+void set_c(uint64_t a, uint64_t res);
 
 int *read_nz(void); // devuelve puntero a array[2] con N y Z
 

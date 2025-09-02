@@ -5,7 +5,7 @@ set -euo pipefail
 SIM=${SIM:-"./src/sim"}
 PATTERN=${PATTERN:-"./inputs/*.x"}   # glob con ** si tu bash tiene globstar
 OUTDIR=${OUTDIR:-"./dumps"}
-CMDS=${CMDS:-"rdump; run 1; go; rdump; mdump 0x10000000 0x10000040"} # comandos del shell separados por ';'
+CMDS=${CMDS:-"rdump; go; rdump; mdump 0x10000000 0x10000040"} # comandos del shell separados por ';'
 # Para volcar memoria también, podés exportar: CMDS='go; rdump; mdump 0x10000000 0x10000040'
 
 shopt -s nullglob globstar

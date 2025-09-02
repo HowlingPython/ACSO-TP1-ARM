@@ -27,6 +27,8 @@ typedef struct CPU_State_Struct
   int64_t REGS[ARM_REGS]; /* register file. */
   int FLAG_N;             /* flag N */
   int FLAG_Z;             /* flag Z */
+  int FLAG_V;              /* flag V */ 
+  int FLAG_C;              /* flag C */
 } CPU_State;
 
 /* Data Structure for Latch */

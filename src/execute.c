@@ -33,7 +33,6 @@ static void exec_ldur(const Instruction*);
 static void exec_ldurb(const Instruction*);
 static void exec_ldurh(const Instruction*);
 static void handle_unknown(const Instruction*);
-void execute(const Instruction*);
 
 static void exec_adds_immediate(const Instruction* in) {
     uint64_t a   = read_x(in->rn);
@@ -53,6 +52,7 @@ static void exec_adds_extended(const Instruction* in) {
     uint64_t r = a + b;
 
     write_x(in->rd, r);
+    // set_c(a, b, r);
     set_nz(r);
 }
 
@@ -168,13 +168,14 @@ static void exec_lsr_immediate(const Instruction* in) {
 }
 
 static void exec_movz(const Instruction* in) {
-    uint64_t imm = (uint64_t)(in->imm & 0xFFFF); // imm16
+    // uint64_t imm = (uint64_t)(in->imm & 0xFFFF); // imm16
+
     // El TP indica hw==0, asi que no hay que hacer shift,
     // pero si no seria: 
-    // uint64_t v = ((uint64_t)(in->imm & 0xFFFF)) << in->shift_amt;
-    // write_x(in->rd, v);
+    uint64_t v = ((uint64_t)(in->imm & 0xFFFF)) << in->shift_amt;
+    write_x(in->rd, v);
 
-    write_x(in->rd, imm);
+    // write_x(in->rd, imm);
 }
 
 static void exec_add_immediate(const Instruction* in) {
@@ -269,7 +270,8 @@ static void handle_unknown(const Instruction* in) {
 void execute(const Instruction* in) {
     switch (in->opc) {
         case HLT:            exec_hlt(in);            break;
-        case UNKNOWN:        handle_unknown(in);      break;
+        // case UNKNOWN:        handle_unknown(in);      break;
+        case ADCS: break;
         case ADDS_immediate: exec_adds_immediate(in); break;
         case ADDS_extended:  exec_adds_extended(in);  break;
         case SUBS_immediate: exec_subs_immediate(in, TRUE); break;
@@ -301,5 +303,6 @@ void execute(const Instruction* in) {
         case LDUR:           exec_ldur(in);           break;
         case LDURB:          exec_ldurb(in);          break;
         case LDURH:          exec_ldurh(in);          break;
+        default: 0;
     }
 }
