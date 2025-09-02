@@ -132,7 +132,7 @@ static int get_shiftamt(Opcode opc, Instruction instruction) {
         }
         case LSR_immediate:
             return (instruction.hex >> 16) & 0x3F; // immr == n
-        // case MOVZ: se supono que esto debe ser 0 pero algunos tests tampoco pasan sin esto
+        // case MOVZ: se supono que esto debe ser 0 pero algunos tests no pasan sin esto
         //     return ((instruction.hex >> 21) & 0x3) * 16; // hw * 16
         default:
             return 0; // Otros casos no usan shift

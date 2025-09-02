@@ -1,5 +1,40 @@
 #include "execute.h"
 
+static void exec_adds_immediate(const Instruction*);
+static void exec_adds_extended(const Instruction*);
+static void exec_subs_immediate(const Instruction*, int);
+static void exec_subs_extended(const Instruction*, int);
+static void exec_hlt(const Instruction*);
+static void exec_cmp_immediate(const Instruction*);
+static void exec_cmp_extended(const Instruction*);
+static void exec_ands(const Instruction*);
+static void exec_eor(const Instruction*);
+static void exec_orr(const Instruction*);
+static void exec_b(const Instruction*);
+static void exec_br(const Instruction*);
+static void exec_beq(const Instruction*);
+static void exec_bne(const Instruction*);
+static void exec_bgt(const Instruction*);
+static void exec_blt(const Instruction*);
+static void exec_bge(const Instruction*);
+static void exec_ble(const Instruction*);
+static void exec_lsl_immediate(const Instruction*);
+static void exec_lsr_immediate(const Instruction*);
+static void exec_movz(const Instruction*);
+static void exec_add_immediate(const Instruction*);
+static void exec_add_extended(const Instruction*);
+static void exec_mul(const Instruction*);
+static void exec_cbz(const Instruction*);
+static void exec_cbnz(const Instruction*);
+static void exec_stur(const Instruction*);
+static void exec_sturb(const Instruction*);
+static void exec_sturh(const Instruction*);
+static void exec_ldur(const Instruction*);
+static void exec_ldurb(const Instruction*);
+static void exec_ldurh(const Instruction*);
+static void handle_unknown(const Instruction*);
+void execute(const Instruction*);
+
 static void exec_adds_immediate(const Instruction* in) {
     uint64_t a   = read_x(in->rn);
     uint64_t imm = (uint64_t)(in->imm & 0xFFF);   // imm12
@@ -219,10 +254,22 @@ static void exec_ldurh(const Instruction* in) {
     write_x(in->rd, v);
 }
 
+// Falla en opcodes no reconocidos
+static void handle_unknown(const Instruction* in) {
+    fprintf(stderr,
+            "[SIM][EXCEPTION] Unknown/unsupported opcode\n"
+            "  PC=0x%016llx  HEX=0x%08x  OPC=%d\n",
+            (unsigned long long)CURRENT_STATE.PC,
+            (unsigned)in->hex,
+            (int)in->opc);
+    fflush(stderr);
+    exit(EXIT_FAILURE);    
+}
+
 void execute(const Instruction* in) {
     switch (in->opc) {
         case HLT:            exec_hlt(in);            break;
-        case UNKNOWN:                                 break;
+        case UNKNOWN:        handle_unknown(in);      break;
         case ADDS_immediate: exec_adds_immediate(in); break;
         case ADDS_extended:  exec_adds_extended(in);  break;
         case SUBS_immediate: exec_subs_immediate(in, TRUE); break;

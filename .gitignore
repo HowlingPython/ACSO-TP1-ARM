@@ -1,5 +1,6 @@
 /dumps_ref/
 /dumps/
+/src/obj/
 sim
 *.x
 *.s
