@@ -1,0 +1,5 @@
+/dumps_ref/
+/dumps/
+sim
+*.x
+*.s

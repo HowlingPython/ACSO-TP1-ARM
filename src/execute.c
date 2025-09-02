@@ -134,7 +134,11 @@ static void exec_lsr_immediate(const Instruction* in) {
 
 static void exec_movz(const Instruction* in) {
     uint64_t imm = (uint64_t)(in->imm & 0xFFFF); // imm16
-    // El TP indica hw==0, asi que no hay que hacer shift
+    // El TP indica hw==0, asi que no hay que hacer shift,
+    // pero si no seria: 
+    // uint64_t v = ((uint64_t)(in->imm & 0xFFFF)) << in->shift_amt;
+    // write_x(in->rd, v);
+
     write_x(in->rd, imm);
 }
 
@@ -166,14 +170,14 @@ static void exec_mul(const Instruction* in) {
 }
 
 static void exec_cbz(const Instruction* in) {
-    uint64_t a = read_x(in->rn);
+    uint64_t a = read_x(in->rd); // Rt esta en [4:0]
     if (a == 0) {
         NEXT_STATE.PC = CURRENT_STATE.PC + in->imm;   // in->imm ya <<2 y con signo
     }
 }
 
 static void exec_cbnz(const Instruction* in) {
-    uint64_t a = read_x(in->rn);
+    uint64_t a = read_x(in->rd); // Rt esta en [4:0]
     if (a != 0) {
         NEXT_STATE.PC = CURRENT_STATE.PC + in->imm;   // in->imm ya <<2 y con signo
     }
