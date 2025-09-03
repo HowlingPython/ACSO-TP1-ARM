@@ -32,6 +32,7 @@ static void exec_sturh(const Instruction*);
 static void exec_ldur(const Instruction*);
 static void exec_ldurb(const Instruction*);
 static void exec_ldurh(const Instruction*);
+static void exec_adcs(const Instruction*); // no implementado
 static void handle_unknown(const Instruction*);
 
 static void exec_adds_immediate(const Instruction* in) {
@@ -44,6 +45,8 @@ static void exec_adds_immediate(const Instruction* in) {
     uint64_t r = a + imm;
     write_x(in->rd, r);
     set_nz(r);
+    set_v(a, imm, r);
+    set_c(a, imm);
 }
 
 static void exec_adds_extended(const Instruction* in) {
@@ -54,6 +57,8 @@ static void exec_adds_extended(const Instruction* in) {
     write_x(in->rd, r);
     // set_c(a, b, r);
     set_nz(r);
+    set_v(a, b, r);
+    set_c(a, b);
 }
 
 static void exec_subs_immediate(const Instruction* in, int save_result) {
@@ -66,6 +71,8 @@ static void exec_subs_immediate(const Instruction* in, int save_result) {
     uint64_t r = a - imm;
     if (save_result) write_x(in->rd, r);
     set_nz(r);
+    set_v(a, imm, r);
+    set_c(a, imm);
 }
 
 static void exec_subs_extended(const Instruction* in, int save_result) {
@@ -75,6 +82,8 @@ static void exec_subs_extended(const Instruction* in, int save_result) {
 
     if (save_result) write_x(in->rd, r);
     set_nz(r);
+    set_v(a, b, r);
+    set_c(a, b);
 }
 
 static void exec_hlt(const Instruction* in) {
@@ -255,6 +264,17 @@ static void exec_ldurh(const Instruction* in) {
     write_x(in->rd, v);
 }
 
+static void exec_adcs(const Instruction* in) {
+    uint64_t a = read_x(in->rn);
+    uint64_t b = read_x(in->rm);   // ignorar extend/amount (asumir 0)
+    uint64_t c = (uint64_t)CURRENT_STATE.FLAG_C; // llevar como 0 o 1
+    uint64_t r = a + b + c;
+
+    write_x(in->rd, r);
+    //  set_nz(r); //preguntar si hay q ponerlo o no
+    // set_c(a, b, r); // No se pide actualizar C
+}
+
 // Falla en opcodes no reconocidos
 static void handle_unknown(const Instruction* in) {
     fprintf(stderr,
@@ -271,7 +291,7 @@ void execute(const Instruction* in) {
     switch (in->opc) {
         case HLT:            exec_hlt(in);            break;
         // case UNKNOWN:        handle_unknown(in);      break;
-        case ADCS: break;
+        case ADCS:          /* no implementado */        break;
         case ADDS_immediate: exec_adds_immediate(in); break;
         case ADDS_extended:  exec_adds_extended(in);  break;
         case SUBS_immediate: exec_subs_immediate(in, TRUE); break;

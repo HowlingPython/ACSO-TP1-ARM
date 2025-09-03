@@ -65,13 +65,24 @@ void set_nz(uint64_t res) {
        NEXT_STATE.FLAG_C = 0; NEXT_STATE.FLAG_V = 0; */
 }
 
-void set_c(uint64_t a, uint64_t res) {
-    NEXT_STATE.FLAG_C = res < a;
+void set_c(uint64_t a, uint64_t b, uint64_t res) {
+    __uint128_t wide = (__uint128_t)a + (__uint128_t)b;
+    NEXT_STATE.FLAG_C = (wide >> 64) & 1;
 }
 
-int* read_nz(void) {
+void set_v(uint64_t a, uint64_t b, uint64_t res){
+    bool sign_a = (a >> 63) & 1;
+    bool sign_b = (b >> 63) & 1;
+    bool sign_res = (res >> 63) & 1;
+    NEXT_STATE.FLAG_V = (sign_a == sign_b) && (sign_a != sign_res);
+}
+
+int* read_nzvc(void) {
     static int flags[2]; // 0 = N, 1 = Z
     flags[0] = CURRENT_STATE.FLAG_N;
     flags[1] = CURRENT_STATE.FLAG_Z;
+    flags[2] = CURRENT_STATE.FLAG_V;
+    flags[3] = CURRENT_STATE.FLAG_C;
+
     return flags;
 }
