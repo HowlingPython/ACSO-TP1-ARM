@@ -51,18 +51,10 @@ static Opcode get_opcode(uint32_t instruction) {
         if ((uint8_t)(imms + 1) == immr) return LSL_immediate;
     }
 
-    // por algun motivo algunos tests no funcionan sin el MOVZ asi
     // // --- MOVZ (move wide w/ zero):
     if (((instruction >> 23) & 0x1FF) == 0x1A5) {
         return MOVZ;
     }
-
-    // --- MOVZ (move wide w/ zero, 64-bit solo con hw==0):
-    // [31:23] == 110100101 (0x1A5) y [22:21] (hw) == 0 ⇒ shift de 0 bits.
-    // if (((instruction >> 23) & 0x1FF) == 0x1A5) {
-    //     if (((instruction >> 21) & 0x3) == 0) return MOVZ;
-    // }
-
 
     // --- Inmediatas / condicionales por [31:24]
     switch (op24) {
@@ -92,8 +84,8 @@ static Opcode get_opcode(uint32_t instruction) {
     // --- Registro / Logicas / Memoria por [31:21]
     switch (op21) {
         // ADD/ADDS (extended register).
-        case 0x458: return ADD_extended; // ADD shifted register algunos test tampoco pasa sin esto
         case 0x5D0: return ADCS;
+        case 0x458: return ADD_extended; // ADD shifted register algunos test tampoco pasa sin esto
         case 0x459: return ADD_extended;
         case 0x558: return ADDS_extended; // 0x558 porque el bit 21 es 0 para este TP, sino seria 0x559. 
         // SUBS/CMP (extended register). CMP si Rd==XZR (Rd==31).

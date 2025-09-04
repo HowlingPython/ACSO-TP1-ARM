@@ -32,7 +32,7 @@ static void exec_sturh(const Instruction*);
 static void exec_ldur(const Instruction*);
 static void exec_ldurb(const Instruction*);
 static void exec_ldurh(const Instruction*);
-static void exec_adcs(const Instruction*); // no implementado
+static void exec_adcs(const Instruction*); 
 static void handle_unknown(const Instruction*);
 
 static void exec_adds_immediate(const Instruction* in) {
@@ -44,9 +44,7 @@ static void exec_adds_immediate(const Instruction* in) {
 
     uint64_t r = a + imm;
     write_x(in->rd, r);
-    set_nz(r);
-    set_v(a, imm, r);
-    set_c(a, imm);
+    set_nzcv(a, imm, r);
 }
 
 static void exec_adds_extended(const Instruction* in) {
@@ -55,10 +53,7 @@ static void exec_adds_extended(const Instruction* in) {
     uint64_t r = a + b;
 
     write_x(in->rd, r);
-    // set_c(a, b, r);
-    set_nz(r);
-    set_v(a, b, r);
-    set_c(a, b);
+    set_nzcv(a, b, r);
 }
 
 static void exec_subs_immediate(const Instruction* in, int save_result) {
@@ -70,9 +65,7 @@ static void exec_subs_immediate(const Instruction* in, int save_result) {
 
     uint64_t r = a - imm;
     if (save_result) write_x(in->rd, r);
-    set_nz(r);
-    set_v(a, imm, r);
-    set_c(a, imm);
+    set_nzcv(a, imm, r);
 }
 
 static void exec_subs_extended(const Instruction* in, int save_result) {
@@ -81,9 +74,7 @@ static void exec_subs_extended(const Instruction* in, int save_result) {
     uint64_t r = a - b;
 
     if (save_result) write_x(in->rd, r);
-    set_nz(r);
-    set_v(a, b, r);
-    set_c(a, b);
+    set_nzcv(a, b, r);
 }
 
 static void exec_hlt(const Instruction* in) {
@@ -99,7 +90,7 @@ static void exec_cmp_extended(const Instruction* in) {
     exec_subs_extended(in, FALSE);  // no guarda resultado  
 }
 
-static void exec_ands (const Instruction* in) {
+static void exec_ands(const Instruction* in) {
     uint64_t a = read_x(in->rn);
     uint64_t b = read_x(in->rm);
     uint64_t r = a & b;
@@ -108,7 +99,7 @@ static void exec_ands (const Instruction* in) {
     set_nz(r);
 }
 
-static void exec_eor (const Instruction* in) {
+static void exec_eor(const Instruction* in) {
     uint64_t a = read_x(in->rn);
     uint64_t b = read_x(in->rm);
     uint64_t r = a ^ b;
@@ -177,14 +168,8 @@ static void exec_lsr_immediate(const Instruction* in) {
 }
 
 static void exec_movz(const Instruction* in) {
-    // uint64_t imm = (uint64_t)(in->imm & 0xFFFF); // imm16
-
-    // El TP indica hw==0, asi que no hay que hacer shift,
-    // pero si no seria: 
     uint64_t v = ((uint64_t)(in->imm & 0xFFFF)) << in->shift_amt;
     write_x(in->rd, v);
-
-    // write_x(in->rd, imm);
 }
 
 static void exec_add_immediate(const Instruction* in) {
@@ -267,12 +252,11 @@ static void exec_ldurh(const Instruction* in) {
 static void exec_adcs(const Instruction* in) {
     uint64_t a = read_x(in->rn);
     uint64_t b = read_x(in->rm);   // ignorar extend/amount (asumir 0)
-    uint64_t c = (uint64_t)CURRENT_STATE.FLAG_C; // llevar como 0 o 1
-    uint64_t r = a + b + c;
+    int* f = read_nzvc(); // Retorna array con flags actuales. CURRENT_STATE.FLAG_C -> f[3]
+    uint64_t r = a + b + (uint64_t) f[3];
 
     write_x(in->rd, r);
-    //  set_nz(r); //preguntar si hay q ponerlo o no
-    // set_c(a, b, r); // No se pide actualizar C
+    set_nzcv(a, b, r);
 }
 
 // Falla en opcodes no reconocidos
@@ -283,15 +267,13 @@ static void handle_unknown(const Instruction* in) {
             (unsigned long long)CURRENT_STATE.PC,
             (unsigned)in->hex,
             (int)in->opc);
-    fflush(stderr);
-    exit(EXIT_FAILURE);    
 }
 
 void execute(const Instruction* in) {
     switch (in->opc) {
         case HLT:            exec_hlt(in);            break;
-        // case UNKNOWN:        handle_unknown(in);      break;
-        case ADCS:          /* no implementado */        break;
+        case UNKNOWN:        handle_unknown(in);      break;
+        case ADCS:           exec_adcs(in);           break;
         case ADDS_immediate: exec_adds_immediate(in); break;
         case ADDS_extended:  exec_adds_extended(in);  break;
         case SUBS_immediate: exec_subs_immediate(in, TRUE); break;
@@ -323,6 +305,6 @@ void execute(const Instruction* in) {
         case LDUR:           exec_ldur(in);           break;
         case LDURB:          exec_ldurb(in);          break;
         case LDURH:          exec_ldurh(in);          break;
-        default: 0;
+        default:                                      break;
     }
 }

@@ -1,8 +1,7 @@
 #ifndef DECODE_H
 #define DECODE_H
 
-#include <stdio.h>
-#include <inttypes.h>
+#include "shell.h"
 #include "Opcodes.h"
 
 typedef struct {

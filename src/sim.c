@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <assert.h>
-#include <string.h>
 #include "shell.h"
 #include "decode.h"
 #include "execute.h"
