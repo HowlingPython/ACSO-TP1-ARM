@@ -3,10 +3,9 @@ set -euo pipefail
 
 # --- Config (override via env) ---
 SIM=${SIM:-"./src/sim"}
-PATTERN=${PATTERN:-"./inputs/*.x"}   # glob con ** si tu bash tiene globstar
+PATTERN=${PATTERN:-"./inputs/*.x"}  
 OUTDIR=${OUTDIR:-"./dumps"}
-CMDS=${CMDS:-"rdump; go; rdump; mdump 0x10000000 0x10000040"} # comandos del shell separados por ';'
-# Para volcar memoria también, podés exportar: CMDS='go; rdump; mdump 0x10000000 0x10000040'
+CMDS=${CMDS:-"rdump; mdump 0x10000000 0x10000040; go; rdump; mdump 0x10000000 0x10000040"} # comandos del shell separados por ';'
 
 shopt -s nullglob globstar
 mkdir -p "$OUTDIR"
