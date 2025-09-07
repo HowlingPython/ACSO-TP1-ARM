@@ -47,13 +47,13 @@ void mem_write64(uint64_t addr, uint64_t val) {
     }
 }
 
-uint64_t read_x(unsigned idx) {
+uint64_t read_register(unsigned idx) {
     if (idx == 31)
         return 0; // XZR: lectura siempre 0
     return (uint64_t)CURRENT_STATE.REGS[idx];
 }
 
-void write_x(unsigned idx, uint64_t val) {
+void write_register(unsigned idx, uint64_t val) {
     if (idx == 31) return;               // XZR: descarta escritura
     NEXT_STATE.REGS[idx] = (int64_t)val; // registros son int64_t en shell.h
 }
