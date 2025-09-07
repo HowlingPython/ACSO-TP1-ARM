@@ -19,9 +19,9 @@ void mem_write16(uint64_t addr, uint16_t val);
 void mem_write64(uint64_t addr, uint64_t val);
 
 /* Lectura/escritura de registros X0..X31 (XZR = 31) */
-uint64_t read_x(unsigned idx);
+uint64_t read_register(unsigned idx);
 
-void write_x(unsigned idx, uint64_t val);
+void write_register(unsigned idx, uint64_t val);
 
 /* Setea flags N, Z */
 void set_nz(uint64_t res);

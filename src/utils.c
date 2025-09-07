@@ -1,52 +1,54 @@
 #include "utils.h"
 
-uint8_t mem_read8(uint64_t addr) {
-    uint64_t aligned = addr & ~3ULL;
-    uint32_t w = mem_read_32(aligned);
-    int shift = (int)((addr & 3ULL) * 8);
-    return (uint8_t)((w >> shift) & 0xFFu);
+uint8_t mem_read8(uint64_t address) {
+    const uint64_t aligned_addr = address & ~UINT64_C(3);
+    const uint32_t word32 = mem_read_32(aligned_addr);
+    const unsigned byte_index = (unsigned)(address & UINT64_C(3));
+    const unsigned bit_shift = byte_index * 8u;
+    return (uint8_t)((word32 >> bit_shift) & UINT32_C(0xFF));
+}
+void mem_write8(uint64_t address, uint8_t value8) {
+    const uint64_t aligned_addr = address & ~UINT64_C(3);
+    const uint32_t word32 = mem_read_32(aligned_addr);
+    const unsigned byte_index = (unsigned)(address & UINT64_C(3));
+    const unsigned bit_shift = byte_index * 8u;
+    const uint32_t clear_mask = ~(UINT32_C(0xFF) << bit_shift);
+    const uint32_t updated_word32 = (word32 & clear_mask) | ((uint32_t)value8 << bit_shift);
+    mem_write_32(aligned_addr, updated_word32);
 }
 
-void mem_write8(uint64_t addr, uint8_t val) {
-    uint64_t aligned = addr & ~3ULL;
-    uint32_t w = mem_read_32(aligned);
-    int shift = (int)((addr & 3ULL) * 8);
-    uint32_t mask = ~(0xFFu << shift);
-    uint32_t nw = (w & mask) | (((uint32_t)val) << shift);
-    mem_write_32(aligned, nw);
+uint16_t mem_read16(uint64_t address) {
+    const uint64_t aligned_addr = address & ~UINT64_C(3);
+    const uint32_t word32 = mem_read_32(aligned_addr);
+    const unsigned byte_index = (unsigned)(address & UINT64_C(3));
+    const unsigned bit_shift = byte_index * 8u;
+    return (uint16_t)((word32 >> bit_shift) & UINT32_C(0xFFFF));
 }
 
-uint16_t mem_read16(uint64_t addr) {
-    uint64_t aligned = addr & ~3ULL;
-    uint32_t w = mem_read_32(aligned);
-    int shift = (int)((addr & 3ULL) * 8);
-    
-    return (uint16_t)((w >> shift) & 0xFFFF);
+void mem_write16(uint64_t address, uint16_t value16) {
+    const uint64_t aligned_addr = address & ~UINT64_C(3);
+    const uint32_t word32 = mem_read_32(aligned_addr);
+    const unsigned byte_index = (unsigned)(address & UINT64_C(3));
+    const unsigned bit_shift = byte_index * 8u;
+    const uint32_t clear_mask = ~(UINT32_C(0xFFFF) << bit_shift);
+    const uint32_t updated_word32 = (word32 & clear_mask) | ((uint32_t)value16 << bit_shift);
+    mem_write_32(aligned_addr, updated_word32);
 }
 
-void mem_write16(uint64_t addr, uint16_t val) {
-    uint64_t aligned = addr & ~3ULL;
-    uint32_t w = mem_read_32(aligned);
-    int shift = (int)((addr & 3ULL) * 8);
-    uint32_t mask = ~(0xFFFFu << shift);
-    uint32_t nw = (w & mask) | (((uint32_t)val) << shift);
-    mem_write_32(aligned, nw);
-}
-
-uint64_t mem_read64(uint64_t addr) {
-    uint64_t v = 0;
-    for (int i = 0; i < 8; ++i) {
-        v |= ((uint64_t)mem_read8(addr + (uint64_t)i)) << (8 * i);
+uint64_t mem_read64(uint64_t address) {
+    uint64_t value64 = 0;
+    for (unsigned byte_index = 0; byte_index < 8; ++byte_index) {
+        value64 |= ((uint64_t)mem_read8(address + (uint64_t)byte_index)) << (8u * byte_index);
     }
-    return v;
+    return value64;
 }
 
-void mem_write64(uint64_t addr, uint64_t val) {
-    for (int i = 0; i < 8; ++i) {
-        mem_write8(addr + (uint64_t)i, (uint8_t)((val >> (8 * i)) & 0xFFu));
+void mem_write64(uint64_t address, uint64_t value64) {
+    for (unsigned byte_index = 0; byte_index < 8; ++byte_index) {
+        const uint8_t byte = (uint8_t)((value64 >> (8u * byte_index)) & UINT64_C(0xFF));
+        mem_write8(address + (uint64_t)byte_index, byte);
     }
 }
-
 uint64_t read_register(unsigned idx) {
     if (idx == 31)
         return 0; // XZR: lectura siempre 0

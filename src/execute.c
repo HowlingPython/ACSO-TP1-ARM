@@ -42,18 +42,18 @@ static void exec_adds_immediate(const Instruction* in) {
     /* implementar shift == 00 (sin cambio) y 01 (<<12) no ReservedValue */
     if (in->shift_amt == 1) imm <<= 12;
 
-    uint64_t r = a + imm;
-    write_register(in->rd, r);
-    set_nzcv(a, imm, r);
+    uint64_t res = a + imm;
+    write_register(in->rd, res);
+    set_nzcv(a, imm, res);
 }
 
 static void exec_adds_extended(const Instruction* in) {
     uint64_t a = read_register(in->rn);
     uint64_t b = read_register(in->rm);   // ignorar extend/amount (asumir 0)
-    uint64_t r = a + b;
+    uint64_t res = a + b;
 
-    write_register(in->rd, r);
-    set_nzcv(a, b, r);
+    write_register(in->rd, res);
+    set_nzcv(a, b, res);
 }
 
 static void exec_subs_immediate(const Instruction* in, int save_result) {
@@ -63,18 +63,18 @@ static void exec_subs_immediate(const Instruction* in, int save_result) {
     /* implementar shift == 00 (sin cambio) y 01 (<<12) no ReservedValue */
     if (in->shift_amt == 1) imm <<= 12;
 
-    uint64_t r = a - imm;
-    if (save_result) write_register(in->rd, r);
-    set_nzcv(a, imm, r);
+    uint64_t res = a - imm;
+    if (save_result) write_register(in->rd, res);
+    set_nzcv(a, imm, res);
 }
 
 static void exec_subs_extended(const Instruction* in, int save_result) {
     uint64_t a = read_register(in->rn);
     uint64_t b = read_register(in->rm);   // ignorar extend/amount (asumir 0)
-    uint64_t r = a - b;
+    uint64_t res = a - b;
 
-    if (save_result) write_register(in->rd, r);
-    set_nzcv(a, b, r);
+    if (save_result) write_register(in->rd, res);
+    set_nzcv(a, b, res);
 }
 
 static void exec_hlt(const Instruction* in) {
@@ -93,26 +93,26 @@ static void exec_cmp_extended(const Instruction* in) {
 static void exec_ands(const Instruction* in) {
     uint64_t a = read_register(in->rn);
     uint64_t b = read_register(in->rm);
-    uint64_t r = a & b;
+    uint64_t res = a & b;
 
-    write_register(in->rd, r);
-    set_nz(r);
+    write_register(in->rd, res);
+    set_nz(res);
 }
 
 static void exec_eor(const Instruction* in) {
     uint64_t a = read_register(in->rn);
     uint64_t b = read_register(in->rm);
-    uint64_t r = a ^ b;
+    uint64_t res = a ^ b;
 
-    write_register(in->rd, r);
+    write_register(in->rd, res);
 }
 
 static void exec_orr (const Instruction* in) {
     uint64_t a = read_register(in->rn);
     uint64_t b = read_register(in->rm);
-    uint64_t r = a | b;
+    uint64_t res = a | b;
 
-    write_register(in->rd, r);
+    write_register(in->rd, res);
 }
 
 static void exec_b (const Instruction* in) {
@@ -155,21 +155,21 @@ static void exec_ble(const Instruction* in) {
 
 static void exec_lsl_immediate(const Instruction* in) {
     uint64_t a = read_register(in->rn);
-    uint64_t r = a << in->shift_amt;  // shift_amt computado en el decode
+    uint64_t res = a << in->shift_amt;  // shift_amt computado en el decode
 
-    write_register(in->rd, r);
+    write_register(in->rd, res);
 }
 
 static void exec_lsr_immediate(const Instruction* in) {
     uint64_t a = read_register(in->rn);
-    uint64_t r = a >> in->shift_amt;  // shift_amt computado en el decode
+    uint64_t res = a >> in->shift_amt;  // shift_amt computado en el decode
 
-    write_register(in->rd, r);
+    write_register(in->rd, res);
 }
 
 static void exec_movz(const Instruction* in) {
-    uint64_t v = ((uint64_t)(in->imm & 0xFFFF)) << in->shift_amt;
-    write_register(in->rd, v);
+    uint64_t value = ((uint64_t)(in->imm & 0xFFFF)) << in->shift_amt;
+    write_register(in->rd, value);
 }
 
 static void exec_add_immediate(const Instruction* in) {
@@ -179,24 +179,24 @@ static void exec_add_immediate(const Instruction* in) {
     /* implementar shift == 00 (sin cambio) y 01 (<<12) no ReservedValue */
     if (in->shift_amt == 1) imm <<= 12;
 
-    uint64_t r = a + imm;
-    write_register(in->rd, r);
+    uint64_t res = a + imm;
+    write_register(in->rd, res);
 }
 
 static void exec_add_extended(const Instruction* in) {
     uint64_t a = read_register(in->rn);
     uint64_t b = read_register(in->rm);   // ignorar extend/amount (asumir 0)
-    uint64_t r = a + b;
+    uint64_t res = a + b;
 
-    write_register(in->rd, r);
+    write_register(in->rd, res);
 }
 
 static void exec_mul(const Instruction* in) {
     uint64_t a = read_register(in->rn);
     uint64_t b = read_register(in->rm);
-    uint64_t r = a * b;
+    uint64_t res = a * b;
 
-    write_register(in->rd, r);
+    write_register(in->rd, res);
 }
 
 static void exec_cbz(const Instruction* in) {
@@ -215,48 +215,48 @@ static void exec_cbnz(const Instruction* in) {
 
 static void exec_stur(const Instruction* in) {
     uint64_t addr = read_register(in->rn) + (int64_t)in->imm; // imm9 sign-extended
-    uint64_t v = read_register(in->rd);
-    mem_write64(addr, v);
+    uint64_t value = read_register(in->rd);
+    mem_write64(addr, value);
 }
 
 static void exec_sturb(const Instruction* in) {
     uint64_t addr = read_register(in->rn) + (int64_t)in->imm;
-    uint8_t v = (uint8_t)read_register(in->rd);
-    mem_write8(addr, v);
+    uint8_t value = (uint8_t)read_register(in->rd);
+    mem_write8(addr, value);
 }
 
 static void exec_sturh(const Instruction* in) {
     uint64_t addr = read_register(in->rn) + (int64_t)in->imm;
-    uint16_t v = (uint16_t)read_register(in->rd);
-    mem_write16(addr, v);
+    uint16_t value = (uint16_t)read_register(in->rd);
+    mem_write16(addr, value);
 }
 
 static void exec_ldur(const Instruction* in) {
     uint64_t addr = read_register(in->rn) + (int64_t)in->imm;
-    uint64_t v = mem_read64(addr);
-    write_register(in->rd, v);
+    uint64_t value = mem_read64(addr);
+    write_register(in->rd, value);
 }
 
 static void exec_ldurb(const Instruction* in) {
     uint64_t addr = read_register(in->rn) + (int64_t)in->imm;
-    uint64_t v = (uint64_t)mem_read8(addr); // convertir de un entero unsigned mas chico a 
-    write_register(in->rd, v);                     // uno unsigned mas grande siempre hace zero-extend
+    uint64_t value = (uint64_t)mem_read8(addr); // convertir de un entero unsigned mas chico a 
+    write_register(in->rd, value);              // uno unsigned mas grande siempre hace zero-extend
 }
 
 static void exec_ldurh(const Instruction* in) {
     uint64_t addr = read_register(in->rn) + (int64_t)in->imm;
-    uint64_t v = (uint64_t)mem_read16(addr); // zero-extend
-    write_register(in->rd, v);
+    uint64_t value = (uint64_t)mem_read16(addr); // zero-extend
+    write_register(in->rd, value);
 }
 
 static void exec_adcs(const Instruction* in) {
     uint64_t a = read_register(in->rn);
     uint64_t b = read_register(in->rm);   // ignorar extend/amount (asumir 0)
-    int* f = read_nzvc(); // Retorna array con flags actuales. CURRENT_STATE.FLAG_C -> f[3]
-    uint64_t r = a + b + (uint64_t) f[3];
+    int* flags = read_nzvc(); // Retorna array con flags actuales. CURRENT_STATE.FLAG_C -> f[3]
+    uint64_t res = a + b + (uint64_t) flags[3];
 
-    write_register(in->rd, r);
-    set_nzcv(a, b, r);
+    write_register(in->rd, res);
+    set_nzcv(a, b, res);
 }
 
 // Falla en opcodes no reconocidos

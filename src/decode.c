@@ -60,7 +60,7 @@ static Opcode get_opcode(uint32_t instruction) {
     switch (op24) {
         // ADD (immediate, 64-bit)
         case 0x91: return ADD_immediate;
-        // ADDS (immediate, 64-bit). 
+        // ADDS (immediate, 64-bit)
         case 0xB1: return ADDS_immediate;
         // SUBS (immediate) o CMP (immediate). CMP es SUBS con Rd==XZR (Rd==31).
         case 0xF1: return ((instruction & 0x1F) == 0x1F) ? CMP_immediate : SUBS_immediate;
@@ -83,9 +83,8 @@ static Opcode get_opcode(uint32_t instruction) {
 
     // --- Registro / Logicas / Memoria por [31:21]
     switch (op21) {
-        // ADD/ADDS (extended register).
         case 0x5D0: return ADCS;
-        case 0x458: return ADD_extended; // ADD shifted register algunos test tampoco pasa sin esto
+        // ADD/ADDS (extended register).
         case 0x459: return ADD_extended;
         case 0x558: return ADDS_extended; // 0x558 porque el bit 21 es 0 para este TP, sino seria 0x559. 
         // SUBS/CMP (extended register). CMP si Rd==XZR (Rd==31).
